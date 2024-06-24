@@ -1,0 +1,508 @@
+exec [CCDA2154_Parikh_Drop_Tables];
+
+select waste_patient_id,pat.birth_date,pat.pat_status,pat.death_date,pat.gender,genderabbr,ethnic_group,pat.first_race,racew,
+raceb,racei,racea,racep,raceo,racerf,raceu,racetwo,racedec,raceh,first_contact,last_contact,next_contact,employment_status,primarycare_prov_id,
+primaryloc_id,primaryloc_name 
+into CROWNParikh_Projection.waste.derived_epic_patient
+from PMAP_Staging.dbo.derived_epic_patient_Parikh pat
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = pat.osler_id;
+
+select ccpsei_patient_id,pat.birth_date,pat.pat_status,pat.death_date,pat.gender,genderabbr,ethnic_group,pat.first_race,racew,
+raceb,racei,racea,racep,raceo,racerf,raceu,racetwo,racedec,raceh,first_contact,last_contact,next_contact,employment_status,primarycare_prov_id,
+primaryloc_id,primaryloc_name 
+into CROWNParikh_Projection.ccpsei.derived_epic_patient
+from PMAP_Staging.dbo.derived_epic_patient_Parikh pat
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = pat.osler_id;
+
+select distinct waste_patient_id,pat_enc_date_real,waste_enc_id,adt_pat_class_c,adt_pat_class,adt_patient_stat_c,adt_patient_stat,pending_disch_time,
+exp_admission_time,exp_len_of_stay,admit_source_c,admit_source,delivery_type_c,delivery_type,labor_status_c,labor_status,adt_arrival_time,
+hosp_admsn_time,hosp_disch_time,hosp_admsn_type_c,hosp_admsn_type,department_id,dept_name,dept_abbreviation,
+dep_speciality,dep_rpt_grp_ten,disch_disp_c,disc_disp,inpatient_data_id,ip_episode_id,contact_date,ed_episode_id,inp_adm_date,
+ed_departure_time,op_adm_date,emer_adm_date,hospital_service,ed_visit_yn,serv_area_name
+into CROWNParikh_Projection.waste.derived_inpatient_encounters
+from PMAP_Staging.dbo.derived_inpatient_encounters_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,pat_enc_date_real,ccpsei_enc_id,adt_pat_class_c,adt_pat_class,adt_patient_stat_c,adt_patient_stat,pending_disch_time,
+exp_admission_time,exp_len_of_stay,admit_source_c,admit_source,delivery_type_c,delivery_type,labor_status_c,labor_status,adt_arrival_time,
+hosp_admsn_time,hosp_disch_time,hosp_admsn_type_c,hosp_admsn_type,department_id,dept_name,dept_abbreviation,
+dep_speciality,dep_rpt_grp_ten,disch_disp_c,disc_disp,inpatient_data_id,ip_episode_id,contact_date,ed_episode_id,inp_adm_date,
+ed_departure_time,op_adm_date,emer_adm_date,hospital_service,ed_visit_yn,serv_area_name
+into CROWNParikh_Projection.ccpsei.derived_inpatient_encounters
+from PMAP_Staging.dbo.derived_inpatient_encounters_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct waste_patient_id,pat_enc_date_real,waste_enc_id,contact_date,enc_type_c,enc_type,visit_prov_id,department_id,department_name,
+dept_specialty,dept_rpt_grp_ten,dept_rev_loc_id,eff_dept_id,eff_dept_name,eff_dept_specialty,eff_dept_rpt_grp_ten,eff_dept_rev_loc_id,
+appt_time,appt_status_c,appointment_status,appt_prc_id,appt_visit_type,appt_visit_abbr,appt_cancel_date,los_proc_code,los_proc_name,
+lmp_date,lmp_other,referral_id,referral_source_id,bp_systolic,bp_diastolic,temperature,pulse,weight,height,respirations,
+bmi,bsa,inpatient_data_id,update_date,sensitive_yn,facility,is_historical,has_vitals,contact_year
+into CROWNParikh_Projection.waste.derived_outpatient_encounters
+from PMAP_Staging.dbo.derived_outpatient_encounters_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,pat_enc_date_real,ccpsei_enc_id,contact_date,enc_type_c,enc_type,visit_prov_id,department_id,department_name,
+dept_specialty,dept_rpt_grp_ten,dept_rev_loc_id,eff_dept_id,eff_dept_name,eff_dept_specialty,eff_dept_rpt_grp_ten,eff_dept_rev_loc_id,
+appt_time,appt_status_c,appointment_status,appt_prc_id,appt_visit_type,appt_visit_abbr,appt_cancel_date,los_proc_code,los_proc_name,
+lmp_date,lmp_other,referral_id,referral_source_id,bp_systolic,bp_diastolic,temperature,pulse,weight,height,respirations,
+bmi,bsa,inpatient_data_id,update_date,sensitive_yn,facility,is_historical,has_vitals,contact_year
+into CROWNParikh_Projection.ccpsei.derived_outpatient_encounters
+from PMAP_Staging.dbo.derived_outpatient_encounters_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select waste_patient_id,process_date,first_race,gender,age_at_positive,pat_status,death_date,initial_dx_date,infection_add_date,positive_collection_date,
+positive_result_date,rsltdt_infadd_hour_interval,initial_dx_source
+into CROWNParikh_Projection.waste.covid_pmcoe_covid_positive
+from PMAP_Staging.dbo.covid_pmcoe_covid_positive_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select ccpsei_patient_id,process_date,first_race,gender,age_at_positive,pat_status,death_date,initial_dx_date,infection_add_date,positive_collection_date,
+positive_result_date,rsltdt_infadd_hour_interval,initial_dx_source
+into CROWNParikh_Projection.ccpsei.covid_pmcoe_covid_positive
+from PMAP_Staging.dbo.covid_pmcoe_covid_positive_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+
+select waste_patient_id,el_depress,el_anemdef,el_htn,el_wghtloss,el_lymph,el_coag,el_alcohol,el_chf,el_renlfail,el_perivasc,el_tumor,
+el_aids,el_para,el_pulmcirc,el_htncx,el_ulcer,el_psych,el_obese,el_bldloss,el_chrnlung,el_drug,el_hypothy,el_mets,el_lytes,
+el_liver,el_arth,el_neuro,el_dmcx,el_valve,el_dm,icd10
+into CROWNParikh_Projection.waste.curated_elixhauser_comorbidities
+from PMAP_Staging.dbo.curated_elixhauser_comorbidities_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select ccpsei_patient_id,el_depress,el_anemdef,el_htn,el_wghtloss,el_lymph,el_coag,el_alcohol,el_chf,el_renlfail,el_perivasc,el_tumor,
+el_aids,el_para,el_pulmcirc,el_htncx,el_ulcer,el_psych,el_obese,el_bldloss,el_chrnlung,el_drug,el_hypothy,el_mets,el_lytes,
+el_liver,el_arth,el_neuro,el_dmcx,el_valve,el_dm,icd10
+into CROWNParikh_Projection.ccpsei.curated_elixhauser_comorbidities
+from PMAP_Staging.dbo.curated_elixhauser_comorbidities_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+
+select distinct waste_patient_id,csn.waste_enc_ID,specimen_taken_time,specimen_recv_time,specimen_id,CRP_ord_value,CRP_ord_num_value,CRP_rslt_flag,ESR_ord_value,
+ESR_ord_num_value,ESR_rslt_flag,Ferritin_ord_value,Ferritin_ord_num_value,Ferritin_rslt_flag,DDimer_ord_value,DDimer_ord_num_value,
+DDimer_rslt_flag,Fibrinogen_ord_value,Fibrinogen_ord_num_value,Fibrinogen_rslt_flag,TroponinI_ord_value,TroponinI_ord_num_value,
+TroponinI_rslt_flag,TroponinT_ord_value,TroponinT_ord_num_value,TroponinT_rslt_flag,LDH_ord_value,LDH_ord_num_value,LDH_rslt_flag,
+Il6_ord_value,Il6_ord_num_value,Il6_rslt_flag,WBC_ord_value,WBC_ord_num_value,WBC_rslt_flag,Lymphabs_ord_value,Lymphabs_ord_num_value,
+Lymphabs_rslt_flag,Platelets_ord_value,Platelets_ord_num_value,Platelets_rslt_flag,INR_ord_value,INR_ord_num_value,INR_rslt_flag,
+ProtCActiv_ord_value,ProtCActiv_ord_num_value,ProtCActiv_rslt_flag,ProtSActiv_Ord_value,ProtSActiv_ord_num_value,ProtSActiv_rslt_flag,
+AT3Activ_ord_value,AT3Activ_ord_num_value,AT3Activ_rslt_flag,VWFRIST_ord_value,VWFRIST_ord_num_value,VWFRIST_rslt_flag,AntiXaHep_ord_value,
+AntiXaHep_ord_num_value,AntiXaHep_rslt_flag,AntiXaLMWH_ord_value,AntiXaLMWH_ord_num_value,AntiXaLMWH_rslt_flag
+into CROWNParikh_Projection.waste.curated_inflam_markers
+from PMAP_Staging.dbo.curated_inflam_markers_Parikh inf
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = inf.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = inf.osler_id;
+
+select distinct ccpsei_patient_id,csn.ccpsei_enc_ID,specimen_taken_time,specimen_recv_time,specimen_id,CRP_ord_value,CRP_ord_num_value,CRP_rslt_flag,ESR_ord_value,
+ESR_ord_num_value,ESR_rslt_flag,Ferritin_ord_value,Ferritin_ord_num_value,Ferritin_rslt_flag,DDimer_ord_value,DDimer_ord_num_value,
+DDimer_rslt_flag,Fibrinogen_ord_value,Fibrinogen_ord_num_value,Fibrinogen_rslt_flag,TroponinI_ord_value,TroponinI_ord_num_value,
+TroponinI_rslt_flag,TroponinT_ord_value,TroponinT_ord_num_value,TroponinT_rslt_flag,LDH_ord_value,LDH_ord_num_value,LDH_rslt_flag,
+Il6_ord_value,Il6_ord_num_value,Il6_rslt_flag,WBC_ord_value,WBC_ord_num_value,WBC_rslt_flag,Lymphabs_ord_value,Lymphabs_ord_num_value,
+Lymphabs_rslt_flag,Platelets_ord_value,Platelets_ord_num_value,Platelets_rslt_flag,INR_ord_value,INR_ord_num_value,INR_rslt_flag,
+ProtCActiv_ord_value,ProtCActiv_ord_num_value,ProtCActiv_rslt_flag,ProtSActiv_Ord_value,ProtSActiv_ord_num_value,ProtSActiv_rslt_flag,
+AT3Activ_ord_value,AT3Activ_ord_num_value,AT3Activ_rslt_flag,VWFRIST_ord_value,VWFRIST_ord_num_value,VWFRIST_rslt_flag,AntiXaHep_ord_value,
+AntiXaHep_ord_num_value,AntiXaHep_rslt_flag,AntiXaLMWH_ord_value,AntiXaLMWH_ord_num_value,AntiXaLMWH_rslt_flag
+into CROWNParikh_Projection.ccpsei.curated_inflam_markers
+from PMAP_Staging.dbo.curated_inflam_markers_Parikh inf
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = inf.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = inf.osler_id;
+
+select distinct waste_patient_id,AGE,SEX_C,RACE_C,HISPANIC_C,POSITIVE_TEST_TIME,INIT_ENC_ID ,ADMIT_TIME,ADMIT_SOURCE_C,ADMIT_SOURCE_NAME, 
+  TRANSFER_FROM_C,TRANSFER_FROM_NAME,INIT_HOSP_LOC_ABBR,waste_enc_id "LINKED_ENC_ID",TRANSFER_TIME,OXYGEN_RX,INT_DIALYSIS_RX,NIPPV_RX,HIFLOW_RX, 
+  VENT_START,IVPRESSOR_RX,CRRT_RX,ECMO_RX,ECMO_END,TRACH_DTM,CHEST_TUBE_DTM,convalescent_plasma_dtm,VENT_END,IVPRESSOR_END,HIFLOW_END,NIPPV_END,CRRT_END,
+  INT_DIALYSIS_END,OXYGEN_END,INIT_DNR_DNI,FINAL_HOSP_DISCH_TIME,FINAL_DISCH_DISP_C,FINAL_DISCH_DISP_NAME,DEATH_TIME  
+into CROWNParikh_Projection.waste.curated_ipevents
+from (
+select distinct osler_id,AGE,SEX_C,RACE_C,HISPANIC_C,POSITIVE_TEST_TIME,waste_enc_id "INIT_ENC_ID",ADMIT_TIME,ADMIT_SOURCE_C,ADMIT_SOURCE_NAME, 
+  TRANSFER_FROM_C,TRANSFER_FROM_NAME,INIT_HOSP_LOC_ABBR,LINKED_CSN,TRANSFER_TIME,OXYGEN_RX,INT_DIALYSIS_RX,NIPPV_RX,HIFLOW_RX,
+  VENT_START,IVPRESSOR_RX,CRRT_RX,ECMO_RX,ECMO_END,TRACH_DTM,CHEST_TUBE_DTM,convalescent_plasma_dtm,VENT_END,IVPRESSOR_END,HIFLOW_END,NIPPV_END,CRRT_END, 
+  INT_DIALYSIS_END,OXYGEN_END,INIT_DNR_DNI,FINAL_HOSP_DISCH_TIME,FINAL_DISCH_DISP_C,FINAL_DISCH_DISP_NAME,DEATH_TIME 
+from PMAP_Staging.dbo.curated_ipevents_Parikh par
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.INIT_PAT_ENC_CSN_ID) t
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = t.LINKED_CSN
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = t.osler_id;
+
+select distinct ccpsei_patient_id,AGE,SEX_C,RACE_C,HISPANIC_C,POSITIVE_TEST_TIME,INIT_ENC_ID ,ADMIT_TIME,ADMIT_SOURCE_C,ADMIT_SOURCE_NAME, 
+  TRANSFER_FROM_C,TRANSFER_FROM_NAME,INIT_HOSP_LOC_ABBR,ccpsei_enc_id "LINKED_ENC_ID",TRANSFER_TIME,OXYGEN_RX,INT_DIALYSIS_RX,NIPPV_RX,HIFLOW_RX, 
+  VENT_START,IVPRESSOR_RX,CRRT_RX,ECMO_RX,ECMO_END,TRACH_DTM,CHEST_TUBE_DTM,convalescent_plasma_dtm,VENT_END,IVPRESSOR_END,HIFLOW_END,NIPPV_END,CRRT_END,
+  INT_DIALYSIS_END,OXYGEN_END,INIT_DNR_DNI,FINAL_HOSP_DISCH_TIME,FINAL_DISCH_DISP_C,FINAL_DISCH_DISP_NAME,DEATH_TIME  
+into CROWNParikh_Projection.ccpsei.curated_ipevents
+from (
+select distinct osler_id,AGE,SEX_C,RACE_C,HISPANIC_C,POSITIVE_TEST_TIME,ccpsei_enc_id "INIT_ENC_ID",ADMIT_TIME,ADMIT_SOURCE_C,ADMIT_SOURCE_NAME, 
+  TRANSFER_FROM_C,TRANSFER_FROM_NAME,INIT_HOSP_LOC_ABBR,LINKED_CSN,TRANSFER_TIME,OXYGEN_RX,INT_DIALYSIS_RX,NIPPV_RX,HIFLOW_RX,
+  VENT_START,IVPRESSOR_RX,CRRT_RX,ECMO_RX,ECMO_END,TRACH_DTM,CHEST_TUBE_DTM,convalescent_plasma_dtm,VENT_END,IVPRESSOR_END,HIFLOW_END,NIPPV_END,CRRT_END, 
+  INT_DIALYSIS_END,OXYGEN_END,INIT_DNR_DNI,FINAL_HOSP_DISCH_TIME,FINAL_DISCH_DISP_C,FINAL_DISCH_DISP_NAME,DEATH_TIME 
+from PMAP_Staging.dbo.curated_ipevents_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.INIT_PAT_ENC_CSN_ID) t
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = t.LINKED_CSN
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = t.osler_id;
+
+select waste_patient_id,RECORDED_TIME,RECORD_TYPE,Pulse,RHYTHM,SBP_cuff,DBP_cuff,MAP_cuff,SBP_aline,DBP_aline,MAP_aline,Resp_rate,Temp_c,
+Temp_src,Pulse_ox_sat,Fentanyl_gtt,Midazolam_gtt,Propofol_gtt,Dexmedetomidine_gtt,Hydromorphone_gtt,Ketamine_gtt,Norepinephrine_gtt,
+Epinephrine_gtt,Phenylephrine_gtt,Dobutamine_gtt,Vasopressin_gtt,Cisatracurium_gtt,Vecuronium_gtt,Nicardipine_gtt,Nitroglycerin_gtt,
+Heparin_gtt,O2_device,FiO2_pct,Flow_Lmin,PEEP_cmH2O
+into CROWNParikh_Projection.waste.curated_ipvitals
+from PMAP_Staging.dbo.curated_ipvitals_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select ccpsei_patient_id,RECORDED_TIME,RECORD_TYPE,Pulse,RHYTHM,SBP_cuff,DBP_cuff,MAP_cuff,SBP_aline,DBP_aline,MAP_aline,Resp_rate,Temp_c,
+Temp_src,Pulse_ox_sat,Fentanyl_gtt,Midazolam_gtt,Propofol_gtt,Dexmedetomidine_gtt,Hydromorphone_gtt,Ketamine_gtt,Norepinephrine_gtt,
+Epinephrine_gtt,Phenylephrine_gtt,Dobutamine_gtt,Vasopressin_gtt,Cisatracurium_gtt,Vecuronium_gtt,Nicardipine_gtt,Nitroglycerin_gtt,
+Heparin_gtt,O2_device,FiO2_pct,Flow_Lmin,PEEP_cmH2O
+into CROWNParikh_Projection.ccpsei.curated_ipvitals
+from PMAP_Staging.dbo.curated_ipvitals_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct waste_patient_id,t.waste_enc_id,csn.waste_enc_id "linked_csn",[event],[start]
+,[end],[who_score_numeric],[who_score_grouped],[who_score]
+into CROWNParikh_Projection.waste.curated_who_status
+from (
+select distinct osler_id,waste_enc_id,[linked_csn],[event],[start]
+,[end],[who_score_numeric],[who_score_grouped],[who_score]
+from PMAP_Staging.dbo.curated_who_status_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id) t
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = t.LINKED_CSN
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = t.osler_id;
+
+select distinct ccpsei_patient_id,t.ccpsei_enc_id,csn.ccpsei_enc_id "linked_csn",[event],[start]
+,[end],[who_score_numeric],[who_score_grouped],[who_score]
+into CROWNParikh_Projection.ccpsei.curated_who_status
+from (
+select distinct osler_id,ccpsei_enc_id,[linked_csn],[event],[start]
+,[end],[who_score_numeric],[who_score_grouped],[who_score]
+from PMAP_Staging.dbo.curated_who_status_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id) t
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = t.LINKED_CSN
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = t.osler_id;
+
+select distinct waste_patient_id,csn.waste_enc_id,line,dx_id,dx_name,dx_group,parent_dx_id,parent_dx_name,icd10_code,icd9_code,current_icd10_list,
+current_icd9_list,enc_contact_date,annotation,dx_qualifier,dx_qualifier_c,primary_dx_yn,comments,dx_chronic_yn,dx_unique,dx_ed_yn,
+dx_link_prob_id
+into CROWNParikh_Projection.waste.derived_encounter_dx
+from PMAP_Staging.dbo.derived_encounter_dx_Parikh inf
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = inf.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = inf.osler_id;
+
+select distinct ccpsei_patient_id,csn.ccpsei_enc_id,line,dx_id,dx_name,dx_group,parent_dx_id,parent_dx_name,icd10_code,icd9_code,current_icd10_list,
+current_icd9_list,enc_contact_date,annotation,dx_qualifier,dx_qualifier_c,primary_dx_yn,comments,dx_chronic_yn,dx_unique,dx_ed_yn,
+dx_link_prob_id
+into CROWNParikh_Projection.ccpsei.derived_encounter_dx
+from PMAP_Staging.dbo.derived_encounter_dx_Parikh inf
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = inf.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = inf.osler_id;
+
+select waste_patient_id,enroll_id,research_study_id,enroll_status_c,enroll_status,
+study_alias,enroll_start_dt,enroll_end_dt,enroll_cmt_note_id,last_mod_dttm,
+last_mod_user_id,record_creation_dt,last_mod_source_c,last_mod_source,rsh_myc_status_c,
+rsh_myc_status,myc_viewed_utc_dttm,study_code,research_name,irb_approval_num,pi_id,
+principal_investigator,study_status,study_create_date,study_update_time
+into CROWNParikh_Projection.waste.derived_enroll_info
+from PMAP_Staging.dbo.derived_enroll_info_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select ccpsei_patient_id,enroll_id,research_study_id,enroll_status_c,enroll_status,
+study_alias,enroll_start_dt,enroll_end_dt,enroll_cmt_note_id,last_mod_dttm,
+last_mod_user_id,record_creation_dt,last_mod_source_c,last_mod_source,rsh_myc_status_c,
+rsh_myc_status,myc_viewed_utc_dttm,study_code,research_name,irb_approval_num,pi_id,
+principal_investigator,study_status,study_create_date,study_update_time
+into CROWNParikh_Projection.ccpsei.derived_enroll_info
+from PMAP_Staging.dbo.derived_enroll_info_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct waste_patient_id,csn.waste_enc_id,inpatient_data_id,recorded_time,entry_time,meas_value
+,meas_comment,meas_name,meas_disp_name,meas_id,meas_row_type,meas_val_type,meas_row_type_c,
+meas_val_type_c,meas_template_id,template_display_name,meas_fsd_id,meas_line,enc_contact_date,
+enc_dept_id,enc_type,enc_type_c,lastupdate_dttm
+into CROWNParikh_Projection.waste.derived_epic_vitals
+from PMAP_Staging.dbo.derived_epic_vitals_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,csn.ccpsei_enc_id,inpatient_data_id,recorded_time,entry_time,meas_value
+,meas_comment,meas_name,meas_disp_name,meas_id,meas_row_type,meas_val_type,meas_row_type_c,
+meas_val_type_c,meas_template_id,template_display_name,meas_fsd_id,meas_line,enc_contact_date,
+enc_dept_id,enc_type,enc_type_c,lastupdate_dttm
+into CROWNParikh_Projection.ccpsei.derived_epic_vitals
+from PMAP_Staging.dbo.derived_epic_vitals_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id; 
+
+select waste_patient_id, csn.waste_enc_id,inpatient_data_id,recorded_time,meas_value,meas_comment,meas_name,
+meas_disp_name,rw_meas_name,rw_disp_name,rw_row_name,meas_id,meas_row_type,meas_val_type,meas_row_type_c,
+meas_val_type_c,meas_template_id,meas_fsd_id,meas_line,meas_occurance,rw_meas_id,ip_lda_id,rw_row_type,
+rw_val_type,rw_row_type_c,rw_val_type_c,ipds_template_id,ipds_rec_status_c,capture_device_id,meas_value_truncated,
+meas_comment_truncated,rw_row_name_truncated,meas_name_truncated,meas_disp_name_truncated
+into CROWNParikh_Projection.waste.derived_flowsheet_data
+from PMAP_Staging.dbo.derived_flowsheet_data_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id;
+
+select ccpsei_patient_id, csn.ccpsei_enc_id,inpatient_data_id,recorded_time,meas_value,meas_comment,meas_name,
+meas_disp_name,rw_meas_name,rw_disp_name,rw_row_name,meas_id,meas_row_type,meas_val_type,meas_row_type_c,
+meas_val_type_c,meas_template_id,meas_fsd_id,meas_line,meas_occurance,rw_meas_id,ip_lda_id,rw_row_type,
+rw_val_type,rw_row_type_c,rw_val_type_c,ipds_template_id,ipds_rec_status_c,capture_device_id,meas_value_truncated,
+meas_comment_truncated,rw_row_name_truncated,meas_name_truncated,meas_disp_name_truncated
+into CROWNParikh_Projection.ccpsei.derived_flowsheet_data
+from PMAP_Staging.dbo.derived_flowsheet_data_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id;
+
+
+select distinct waste_patient_id,line,csn.waste_enc_id,dx_id,dx_name,dx_group,icd10_code,
+icd9_code,current_icd10_list,current_icd9_list,dx_affects_drg_yn,dx_comorbidity_yn,
+final_dx_soi_c,severity_of_illness,final_dx_rom_c,risk_of_mortality,final_dx_excld_yn,
+fnl_dx_afct_soi_yn,fnl_dx_afct_rom_yn,final_dx_poa_c,present_on_admission,dx_comorbidity_c,
+comorbidity_exists,dx_hac_yn,dx_type_c,diagnosis_type,dx_start_dt,dx_end_dt,dx_problem_id,
+dx_chronic_flag_yn,dx_supp_atc_code_c,atc_dx_name,dx_hsp_prob_flag_yn,dx_overridden_dx_id,
+dx_disproven_yn,dk_cancer_status_c,cancer_status,dx_documenting_user_id,fnl_dx_qualifier_c,
+dx_qualifier,term_dx_id,adm_date_time
+into CROWNParikh_Projection.waste.derived_hosp_billing_dx
+from PMAP_Staging.dbo.derived_hosp_billing_dx_Parikh par
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,line,csn.ccpsei_enc_id,dx_id,dx_name,dx_group,icd10_code,
+icd9_code,current_icd10_list,current_icd9_list,dx_affects_drg_yn,dx_comorbidity_yn,
+final_dx_soi_c,severity_of_illness,final_dx_rom_c,risk_of_mortality,final_dx_excld_yn,
+fnl_dx_afct_soi_yn,fnl_dx_afct_rom_yn,final_dx_poa_c,present_on_admission,dx_comorbidity_c,
+comorbidity_exists,dx_hac_yn,dx_type_c,diagnosis_type,dx_start_dt,dx_end_dt,dx_problem_id,
+dx_chronic_flag_yn,dx_supp_atc_code_c,atc_dx_name,dx_hsp_prob_flag_yn,dx_overridden_dx_id,
+dx_disproven_yn,dk_cancer_status_c,cancer_status,dx_documenting_user_id,fnl_dx_qualifier_c,
+dx_qualifier,term_dx_id,adm_date_time
+into CROWNParikh_Projection.ccpsei.derived_hosp_billing_dx
+from PMAP_Staging.dbo.derived_hosp_billing_dx_Parikh par
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct waste_patient_id,csn.waste_enc_id,proc_name,code_set_c,code_set_name,code,
+proc_date,proc_perf_prov_id,px_cpt_modifiers,modifier_1_ext_code,modifier_1_name,
+modifier_2_ext_code,modifier_2_name,modifier_3_ext_code,modifier_3_name,modifier_4_ext_code,modifier_4_name,
+px_cpt_quantity,icd_px_id,source_key,source_name,line,coding_info_cpt_line,exclude_yn,affects_soi_yn,affects_rom_yn,
+event_number
+into CROWNParikh_Projection.waste.derived_hosp_billing_px
+from PMAP_Staging.dbo.derived_hosp_billing_px_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,csn.ccpsei_enc_id,proc_name,code_set_c,code_set_name,code,
+proc_date,proc_perf_prov_id,px_cpt_modifiers,modifier_1_ext_code,modifier_1_name,
+modifier_2_ext_code,modifier_2_name,modifier_3_ext_code,modifier_3_name,modifier_4_ext_code,modifier_4_name,
+px_cpt_quantity,icd_px_id,source_key,source_name,line,coding_info_cpt_line,exclude_yn,affects_soi_yn,affects_rom_yn,
+event_number
+into CROWNParikh_Projection.ccpsei.derived_hosp_billing_px
+from PMAP_Staging.dbo.derived_hosp_billing_px_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct waste_patient_id,ord.waste_ord_proc_id,proc_code,proc_name,proc_category,order_status,csn.waste_enc_id,resulting_lab,
+order_time,result_time,review_time,result_status,accession,authrzing_prov_id,
+specimen_taken_date,study_instance,images_avail_yn,image_avail_dttm,image_location,department_name,
+specimen_type,specimen_src
+into CROWNParikh_Projection.waste.derived_image_procedures
+from PMAP_Staging.dbo.derived_image_procedures_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_ord_proc_Mapping ord on ord.order_proc_id = par.order_proc_id;
+
+select distinct ccpsei_patient_id,ord.ccpsei_ord_proc_id,proc_code,proc_name,proc_category,order_status,csn.ccpsei_enc_id,resulting_lab,
+order_time,result_time,review_time,result_status,accession,authrzing_prov_id,
+specimen_taken_date,study_instance,images_avail_yn,image_avail_dttm,image_location,department_name,
+specimen_type,specimen_src
+into CROWNParikh_Projection.ccpsei.derived_image_procedures
+from PMAP_Staging.dbo.derived_image_procedures_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_ord_proc_Mapping ord on ord.order_proc_id = par.order_proc_id;
+
+select distinct waste_patient_id,infection_id,infection_record_type,infection_type,infection_status,how_added,add_utc_dttm,resolve_utc_dttm,
+expiration_date,doesnt_expire_yn,onset_date,comments,specimen_type,specimen_source,record_creation_date,infection_type_c,
+inf_status_c,how_added_c,specimen_type_c,specimen_source_c
+into CROWNParikh_Projection.waste.derived_infections
+from PMAP_Staging.dbo.derived_infections_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,infection_id,infection_record_type,infection_type,infection_status,how_added,add_utc_dttm,resolve_utc_dttm,
+expiration_date,doesnt_expire_yn,onset_date,comments,specimen_type,specimen_source,record_creation_date,infection_type_c,
+inf_status_c,how_added_c,specimen_type_c,specimen_source_c
+into CROWNParikh_Projection.ccpsei.derived_infections
+from PMAP_Staging.dbo.derived_infections_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct waste_patient_id,waste_ord_proc_id,waste_enc_id,proc_id,proc_code,proc_name,proc_cat_id,proc_cat_name,sensitive_yn,
+order_type,lab_group,resulting_lab,order_time,result_time,authorizing_prov_id,specimen_taken_time,
+specimen_recv_time,order_results_line,component_id,component_name,component_base_name,component_type,component_subtype,
+component_lab_subtype,component_freetext_loinc_code,result_flag,order_status,result_status,lab_status,ord_value,ord_num_value,
+reference_low,reference_high,reference_unit,result_sub_idn,res_comp_singleline_comment,res_comp_multiline_comment,
+component_comment_phiflag,result_in_range_yn,ref_normal_vals,lrr_based_organ_id,data_type,numeric_precision,
+comp_obs_inst_tm,comp_anl_inst_tm,loinc_code,loinc_desc,
+external_ord_id,result_instant_tm
+into CROWNParikh_Projection.waste.derived_lab_results
+from PMAP_Staging.dbo.derived_lab_results_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_ord_proc_Mapping ord on ord.order_proc_id = par.order_proc_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,ccpsei_ord_proc_id,ccpsei_enc_id,proc_id,proc_code,proc_name,proc_cat_id,proc_cat_name,sensitive_yn,
+order_type,lab_group,resulting_lab,order_time,result_time,authorizing_prov_id,specimen_taken_time,
+specimen_recv_time,order_results_line,component_id,component_name,component_base_name,component_type,component_subtype,
+component_lab_subtype,component_freetext_loinc_code,result_flag,order_status,result_status,lab_status,ord_value,ord_num_value,
+reference_low,reference_high,reference_unit,result_sub_idn,res_comp_singleline_comment,res_comp_multiline_comment,
+component_comment_phiflag,result_in_range_yn,ref_normal_vals,lrr_based_organ_id,data_type,numeric_precision,
+comp_obs_inst_tm,comp_anl_inst_tm,loinc_code,loinc_desc,
+external_ord_id,result_instant_tm
+into CROWNParikh_Projection.ccpsei.derived_lab_results
+from PMAP_Staging.dbo.derived_lab_results_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_ord_proc_Mapping ord on ord.order_proc_id = par.order_proc_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct waste_patient_id,waste_ord_proc_id,waste_enc_id,proc_id,proc_code,proc_name,proc_cat_id,proc_cat_name,sensitive_yn,order_type,
+lab_group,resulting_lab,order_time,result_time,authorizing_prov_id,referring_prov_id,
+specimen_taken_time,specimen_recv_time,specimen_type,specimen_source,order_results_line,component_id,component_name,
+component_base_name,component_type,component_subtype,component_lab_subtype,component_freetext_loinc_code,result_flag,order_status,
+result_status,lab_status,ord_value,ord_num_value,reference_low,reference_high,reference_unit,result_sub_idn,res_comp_singleline_comment,
+res_comp_multiline_comment,component_comment_phiflag,result_in_range_yn,ref_normal_vals,lrr_based_organ_id,data_type,numeric_precision,
+comp_obs_inst_tm,comp_anl_inst_tm,loinc_code,loinc_desc,external_ord_id,result_instant_tm
+into CROWNParikh_Projection.waste.derived_lab_results_creatinine_baseline
+from PMAP_Staging.dbo.derived_lab_results_creatinine_baseline_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_ord_proc_Mapping ord on ord.order_proc_id = par.order_proc_id;
+
+select distinct ccpsei_patient_id,ccpsei_ord_proc_id,ccpsei_enc_id,proc_id,proc_code,proc_name,proc_cat_id,proc_cat_name,sensitive_yn,order_type,
+lab_group,resulting_lab,order_time,result_time,authorizing_prov_id,referring_prov_id,
+specimen_taken_time,specimen_recv_time,specimen_type,specimen_source,order_results_line,component_id,component_name,
+component_base_name,component_type,component_subtype,component_lab_subtype,component_freetext_loinc_code,result_flag,order_status,
+result_status,lab_status,ord_value,ord_num_value,reference_low,reference_high,reference_unit,result_sub_idn,res_comp_singleline_comment,
+res_comp_multiline_comment,component_comment_phiflag,result_in_range_yn,ref_normal_vals,lrr_based_organ_id,data_type,numeric_precision,
+comp_obs_inst_tm,comp_anl_inst_tm,loinc_code,loinc_desc,external_ord_id,result_instant_tm
+into CROWNParikh_Projection.ccpsei.derived_lab_results_creatinine_baseline
+from PMAP_Staging.dbo.derived_lab_results_creatinine_baseline par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_ord_proc_Mapping ord on ord.order_proc_id = par.order_proc_id;
+
+select distinct waste_patient_id,waste_enc_id,waste_ord_med_id,line,hosp_admsn_time,hosp_disch_time,medication_name,generic_name,medication_id,
+thera_classname,pharm_classname,pharm_subclassname,taken_time,ordering_date,order_end_time,scheduled_time,saved_time,
+mar_time_source,mar_action,route,sig,site,dose_unit,infusion_rate,mar_inf_rate_unit,mar_duration,
+duration_unit,frequency,freq_period,freq_type,number_of_times,time_unit,now_yn,reason,mar_imm_link_id,mar_admin_dept,
+mar_ord_dat,pat_supplied_yn,sensitive_yn
+into CROWNParikh_Projection.waste.derived_med_admin
+from PMAP_Staging.dbo.derived_med_admin_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_order_med_Mapping ord on ord.order_med_id = par.order_med_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,ccpsei_enc_id,ccpsei_ord_med_id,line,hosp_admsn_time,hosp_disch_time,medication_name,generic_name,medication_id,
+thera_classname,pharm_classname,pharm_subclassname,taken_time,ordering_date,order_end_time,scheduled_time,saved_time,
+mar_time_source,mar_action,route,sig,site,dose_unit,infusion_rate,mar_inf_rate_unit,mar_duration,
+duration_unit,frequency,freq_period,freq_type,number_of_times,time_unit,now_yn,reason,mar_imm_link_id,mar_admin_dept,
+mar_ord_dat,pat_supplied_yn,sensitive_yn
+into CROWNParikh_Projection.ccpsei.derived_med_admin
+from PMAP_Staging.dbo.derived_med_admin_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_order_med_Mapping ord on ord.order_med_id = par.order_med_id;
+
+select distinct waste_patient_id,waste_enc_id,start_date,end_date,med_display_name,med_name,order_mode,dose,unit,sig,
+frequency,therapeutic_class,pharmaceutical_class,pharmaceutical_subclass,ordering_dttm,
+discon_time,discon_rsn,current_med_yn,discont_med_yn,waste_ord_med_id,medication_id,ord_status,rxnorm_codes,
+sensitive_yn,extract_dttm
+into CROWNParikh_Projection.waste.derived_med_orders
+from PMAP_Staging.dbo.derived_med_orders_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_order_med_Mapping ord on ord.order_med_id = par.order_med_id;
+
+select distinct ccpsei_patient_id,ccpsei_enc_id,start_date,end_date,med_display_name,med_name,order_mode,dose,unit,sig,
+frequency,therapeutic_class,pharmaceutical_class,pharmaceutical_subclass,ordering_dttm,
+discon_time,discon_rsn,current_med_yn,discont_med_yn,ccpsei_ord_med_id,medication_id,ord_status,rxnorm_codes,
+sensitive_yn,extract_dttm
+into CROWNParikh_Projection.ccpsei.derived_med_orders
+from PMAP_Staging.dbo.derived_med_orders_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_order_med_Mapping ord on ord.order_med_id = par.order_med_id;
+
+select waste_patient_id,medical_hx_date,med_hx_start_dt,med_hx_end_dt,dx_id,dx_name,dx_group,parent_dx_name,icd10_code,icd9_code,annotation,comments
+into CROWNParikh_Projection.waste.derived_medical_hx_summary
+from PMAP_Staging.dbo.derived_medical_hx_summary_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select ccpsei_patient_id,medical_hx_date,med_hx_start_dt,med_hx_end_dt,dx_id,dx_name,dx_group,parent_dx_name,icd10_code,icd9_code,annotation,comments
+into CROWNParikh_Projection.ccpsei.derived_medical_hx_summary
+from PMAP_Staging.dbo.derived_medical_hx_summary_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct waste_patient_id,problem_list_id,dx_id,dx_name,dx_group,parent_dx_id,parent_dx_name,icd10_code,icd9_code,problem_status,
+class_of_problem,priority,treat_summ_stat,noted_date,noted_end_date,resolved_date,date_of_entry,chronic_yn,
+principal_pl_yn,overview_note_id,waste_ord_proc_ID,problem_status_c,class_of_problem_c,priority_c,treat_summ_status_c,
+problem_cmt,current_icd10_list,current_icd9_list
+into CROWNParikh_Projection.waste.derived_problem_list
+from PMAP_Staging.dbo.derived_problem_list_Parikh par
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_ord_proc_Mapping ord on ord.order_proc_id = par.creating_order_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,problem_list_id,dx_id,dx_name,dx_group,parent_dx_id,parent_dx_name,icd10_code,icd9_code,problem_status,
+class_of_problem,priority,treat_summ_stat,noted_date,noted_end_date,resolved_date,date_of_entry,chronic_yn,
+principal_pl_yn,overview_note_id,ccpsei_ord_proc_ID,problem_status_c,class_of_problem_c,priority_c,treat_summ_status_c,
+problem_cmt,current_icd10_list,current_icd9_list
+into CROWNParikh_Projection.ccpsei.derived_problem_list
+from PMAP_Staging.dbo.derived_problem_list_Parikh par
+left join PMAP_Analytics.dbo.CCDA2540_Parihk_ord_proc_Mapping ord on ord.order_proc_id = par.creating_order_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct waste_patient_id,waste_enc_id,pat_enc_date_real,contact_date,hx_lnk_enc_csn,unknown_fam_hx_yn,tobacco_pak_per_dy,
+tobacco_used_years,tobacco_comment,smoking_quit_date,cigarettes_yn,pipes_yn,cigars_yn,snuff_yn,chew_yn,tobacco_user,
+smokeless_tobacco_use,smokeless_quit_date,smoking_tobacco_use,smoking_start_date,tob_src,alcohol_use,alcohol_oz_per_wk,
+alcohol_comment,alcohol_src,alcohol_freq,alc_freq_src,alcohol_drinks_per_day,alc_std_drink_src,alcohol_binge,alc_binge_src,
+ill_drug_user,iv_drug_user_yn,illicit_drug_freq,illicit_drug_cmt,drug_src,female_partner_yn,male_partner_yn,condom_yn,
+pill_yn,diaphragm_yn,iud_yn,surgical_yn,spermicide_yn,implant_yn,rhythm_yn,injection_yn,sponge_yn,inserts_yn,abstinence_yn,
+sex_comment,sex_src,sexually_active,years_education,education_level,edu_level_src,fin_resource_strain,fin_resource_src,
+ipv_emotional_abuse,ipv_emotional_src,ipv_fear,ipv_fear_src,ipv_sexual_abuse,ipv_sexabuse_src,ipv_physical_abuse,
+ipv_physabuse_src,living_w_spouse,soc_living_src,daily_stress,daily_stress_src,phone_communication,phone_comm_src,
+socialization_freq,social_freq_src,church_attendance,church_att_src,clubmtg_attendance,clubmtg_att_src,club_member,
+club_member_src,phys_act_days_per_week,phys_act_dpw_src,phys_act_mins_per_sess,phys_act_mps_src,food_insecurity_scarce,
+food_scarcity_src,food_insecurity_worry,food_worry_src,med_transport_needs,trans_med_src,other_transport_needs,trans_nonmed_src
+into CROWNParikh_Projection.waste.derived_social_history_changes
+from PMAP_Staging.dbo.derived_social_history_changes_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select distinct ccpsei_patient_id,ccpsei_enc_id,pat_enc_date_real,contact_date,hx_lnk_enc_csn,unknown_fam_hx_yn,tobacco_pak_per_dy,
+tobacco_used_years,tobacco_comment,smoking_quit_date,cigarettes_yn,pipes_yn,cigars_yn,snuff_yn,chew_yn,tobacco_user,
+smokeless_tobacco_use,smokeless_quit_date,smoking_tobacco_use,smoking_start_date,tob_src,alcohol_use,alcohol_oz_per_wk,
+alcohol_comment,alcohol_src,alcohol_freq,alc_freq_src,alcohol_drinks_per_day,alc_std_drink_src,alcohol_binge,alc_binge_src,
+ill_drug_user,iv_drug_user_yn,illicit_drug_freq,illicit_drug_cmt,drug_src,female_partner_yn,male_partner_yn,condom_yn,
+pill_yn,diaphragm_yn,iud_yn,surgical_yn,spermicide_yn,implant_yn,rhythm_yn,injection_yn,sponge_yn,inserts_yn,abstinence_yn,
+sex_comment,sex_src,sexually_active,years_education,education_level,edu_level_src,fin_resource_strain,fin_resource_src,
+ipv_emotional_abuse,ipv_emotional_src,ipv_fear,ipv_fear_src,ipv_sexual_abuse,ipv_sexabuse_src,ipv_physical_abuse,
+ipv_physabuse_src,living_w_spouse,soc_living_src,daily_stress,daily_stress_src,phone_communication,phone_comm_src,
+socialization_freq,social_freq_src,church_attendance,church_att_src,clubmtg_attendance,clubmtg_att_src,club_member,
+club_member_src,phys_act_days_per_week,phys_act_dpw_src,phys_act_mins_per_sess,phys_act_mps_src,food_insecurity_scarce,
+food_scarcity_src,food_insecurity_worry,food_worry_src,med_transport_needs,trans_med_src,other_transport_needs,trans_nonmed_src
+into CROWNParikh_Projection.ccpsei.derived_social_history_changes
+from PMAP_Staging.dbo.derived_social_history_changes_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_csn_Mapping csn on csn.Identity_ID = par.pat_enc_csn_id
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select waste_patient_id,enroll_id,research_study_id,enroll_status_c,enroll_status,
+study_alias,enroll_start_dt,enroll_end_dt,enroll_cmt_note_id,last_mod_dttm,
+last_mod_user_id,record_creation_dt,last_mod_source_c,last_mod_source,rsh_myc_status_c,
+rsh_myc_status,myc_viewed_utc_dttm,study_code,research_name,irb_approval_num,pi_id,
+principal_investigator,study_status,study_create_date,study_update_time
+into CROWNParikh_Projection.waste.derived_enroll_info
+from PMAP_Staging.dbo.derived_enroll_info_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;
+
+select ccpsei_patient_id,enroll_id,research_study_id,enroll_status_c,enroll_status,
+study_alias,enroll_start_dt,enroll_end_dt,enroll_cmt_note_id,last_mod_dttm,
+last_mod_user_id,record_creation_dt,last_mod_source_c,last_mod_source,rsh_myc_status_c,
+rsh_myc_status,myc_viewed_utc_dttm,study_code,research_name,irb_approval_num,pi_id,
+principal_investigator,study_status,study_create_date,study_update_time
+into CROWNParikh_Projection.ccpsei.derived_enroll_info
+from PMAP_Staging.dbo.derived_enroll_info_Parikh par
+inner join PMAP_Analytics.dbo.CCDA2540_Parihk_osler_id_Mapping id on id.osler_id = par.osler_id;

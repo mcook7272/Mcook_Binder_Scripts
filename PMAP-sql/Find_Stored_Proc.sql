@@ -1,0 +1,1 @@
+SELECT * FROM F_OBJECT_HUNT('CovidZegEnc_v5')

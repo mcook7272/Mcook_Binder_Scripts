@@ -1,0 +1,2 @@
+insert into project_CuratedTables(DestDBName, DestTabName, StoredProcedure, GroupName, ProjectCycle, NextRun, SchemaName)
+VALUES('CrownIwashyna_Projection', 'derived_flowsheet_data', 'usp_populate_derived_flowsheet_data', 'CrownIwashyna', 7, '2023-06-30', 'dbo')

@@ -1,0 +1,79 @@
+﻿/*
+[8/11 4:24 PM] Eili Klein
+    CAST( COALESCE( AdminMeds.FirstMed,PrepMeds.FirstMed, DispenseMeds.FirstMed, ORDER_MEDINFO.DISPENSABLE_MED_ID ) AS varchar(50) ) PRIMARYCOMPONENTID,
+CAST( COALESCE( AdminMeds.SecondMed,PrepMeds.SecondMed, DispenseMeds.SecondMed ) AS varchar(50) ) SECONDCOMPONENTID,
+CAST( COALESCE( AdminMeds.ThirdMed,PrepMeds.ThirdMed, DispenseMeds.ThirdMed ) AS varchar(50) ) THIRDCOMPONENTID,
+CAST( COALESCE( AdminMeds.FourthMed,PrepMeds.FourthMed, DispenseMeds.FourthMed ) AS varchar(50) ) FOURTHCOMPONENTID,
+CAST( COALESCE( AdminMeds.FifthMed,PrepMeds.FifthMed, DispenseMeds.FifthMed ) AS varchar(50) ) FIFTHCOMPONENTID,
+​[8/11 4:24 PM] Eili Klein
+    AdminMeds = MAR_ADDL_INFO
+​[8/11 4:25 PM] Eili Klein
+    PrepMeds = ORD_DISPENSE_PREP
+​[8/11 4:25 PM] Eili Klein
+    DispenseMeds = ORDER_DISP_MEDS
+
+*/
+
+SELECT TOP 100 *
+FROM RXNORM_CODES
+WHERE MEDICATION_ID = 8478
+
+Select top 100 *
+FROM CLARITY_MEDICATION med
+JOIN ORDER_MED ord on med.MEDICATION_ID = ord.MEDICATION_ID
+WHERE med.MEDICATION_ID = 40880277
+
+SELECT top 100 *
+FROM MAR_ADDL_INFO 
+where ORDER_ID = 251820147
+
+SELECT top 100 *
+FROM ORD_DISPENSE_PREP 
+where ORDER_ID = 251820147
+
+SELECT top 100 *
+FROM ORDER_DISP_MEDS 
+where ORDER_MED_ID = 251820147
+
+Select top 100 *
+FROM CLARITY_MEDICATION med
+JOIN ORDER_MED ord on med.MEDICATION_ID = ord.MEDICATION_ID
+WHERE med.MEDICATION_ID = 8478
+
+--
+
+WITH MED_IDS AS 
+(
+SELECT COALESCE(info.ERX_ID, med.DISP_MED_ID, ndc.MEDICATION_ID) "Med_ID"
+FROM CLARITY..MAR_ADDL_INFO info
+LEFT JOIN CLARITY..ORD_DISPENSE_PREP disp on info.ORDER_ID = disp.ORDER_ID
+LEFT JOIN CLARITY..RX_NDC_STATUS ndc on disp.NDC_CSN = ndc.CNCT_SERIAL_NUM
+LEFT JOIN CLARITY..ORDER_DISP_MEDS med on disp.ORDER_ID = med.ORDER_MED_ID
+)
+
+SELECT distinct fda.*, MED_IDS.Med_ID, rx.MEDICATION_ID, rx.RXNORM_CODE, rx.RXNORM_CODE_LEVEL_C
+FROM ANALYTICS.dbo.CCDA2644_FDA_CROWN_Missing_Drugs fda
+JOIN MED_IDS on fda.medication_id = MED_IDS.Med_ID
+LEFT JOIN RXNORM_CODES rx on MED_IDS.Med_ID = rx.MEDICATION_ID
+
+--
+
+WITH MED_IDS AS 
+(
+SELECT COALESCE(info.ERX_ID, med.DISP_MED_ID, ndc.MEDICATION_ID) "Med_ID", fda.medication_id, fda.medication_name
+FROM ANALYTICS.dbo.CCDA2644_FDA_CROWN_Missing_Drugs fda
+LEFT JOIN CLARITY..ORDER_DISP_MEDS med on fda.medication_id = med.DISP_MED_ID AND fda.medication_id is not null
+LEFT JOIN CLARITY..ORD_DISPENSE_PREP disp on med.ORDER_MED_ID = disp.ORDER_ID
+LEFT JOIN CLARITY..RX_NDC_STATUS ndc on disp.NDC_CSN = ndc.CNCT_SERIAL_NUM
+LEFT JOIN CLARITY..MAR_ADDL_INFO info on disp.ORDER_ID = info.ORDER_ID
+)
+
+SELECT distinct med.Med_ID, med.medication_name, rx.MEDICATION_ID, rx.RXNORM_CODE, rx.RXNORM_CODE_LEVEL_C
+FROM RXNORM_CODES rx 
+JOIN MED_IDS med on med.Med_ID = rx.MEDICATION_ID
+
+select count(*)
+FROM ANALYTICS.dbo.CCDA2644_FDA_CROWN_Missing_Drugs fda
+LEFT JOIN CLARITY..ORDER_DISP_MEDS med on fda.medication_id = med.DISP_MED_ID AND medication_id is not null
+
+1633875

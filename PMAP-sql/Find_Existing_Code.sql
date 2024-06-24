@@ -1,0 +1,3 @@
+USE ANALYTICS;
+
+SELECT * FROM F_OBJECT_HUNT('CCI') --Update accordingly

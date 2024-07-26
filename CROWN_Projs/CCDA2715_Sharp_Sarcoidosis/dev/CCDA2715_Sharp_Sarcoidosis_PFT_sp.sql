@@ -1,0 +1,88 @@
+ALTER proc dbo.[CCDA2715_Sharp_Sarcoidosis_PFT_sp] AS
+/**********************************************************************************
+Author:  Michael Cook
+Date: 7/9/2021
+JIRA: CCDA-2715
+Description: A one-time extract of Adult patients residing in MD seen at the Johns Hopkins Sarcoidosis Clinic. 
+This proc creates the Encounters table.
+Example:
+    EXEC dbo.[CCDA2715_Sharp_Sarcoidosis_PFT_sp]
+     
+Revision History:
+Date            Author          JIRA            Comment
+[date]      [your name]     CCDA-xxx            [Comments about what was changed and why]
+***********************************************************************************/
+
+SET NOCOUNT ON;
+
+drop table if exists Analytics.dbo.CCDA2715_Sharp_Sarcoidosis_PFT;
+
+
+WITH COH AS (
+SELECT DISTINCT PAT_ID
+FROM CLARITY..PAT_LIST
+where LIST_ID = '630939'
+),
+
+ENC AS (
+SELECT DISTINCT PAT_ID, PAT_ENC_CSN_ID
+FROM CLARITY..PAT_ENC
+WHERE ENC_TYPE_C IN ( '1000', '1001', '1003', '1004', '101', '108', '1199', 
+'1200', '1201', '121', '1214', '2', '200', '210', '2100', '2101',
+'2501', '2502', '2508', '2520', '2521', '2522', '2525', '2526', '2529',
+'2531', '50', '62', '76', '81', '91', '20', '55')
+AND EFFECTIVE_DATE_DTTM >= '2017-01-01'
+),
+
+COMP AS (
+SELECT *
+FROM CLARITY..CLARITY_COMPONENT
+WHERE COMPONENT_ID in ('9400000009','9400000073','9400000066','9400000025','9400000024',
+'9400000012','9400000019','9400000016','9400000067','9400000013','9400000005','9400000069',
+'9400000006','9400000002','9400000052','9400000051','9400000048','9400000047','9400000009',
+'9400000073','9400000066','9400000025','9400000024','9400000012','9400000019','9400000016',
+'9400000067','9400000013','9400000005','9400000069','9400000006','9400000002','9400000052',
+'9400000051','9400000048','9400000047','9400000009','9400000073','9400000066','9400000025',
+'9400000024','9400000012','9400000019','9400000016','9400000067','9400000013','9400000005',
+'9400000069','9400000006','9400000002','9400000052','9400000051','9400000048','9400000047',
+'9400000009','9400000073','9400000066','9400000025','9400000024','9400000012','9400000019',
+'9400000016','9400000067','9400000013','9400000005','9400000069','9400000006','9400000002',
+'9400000052','9400000051','9400000048','9400000047','970000195','970000196','970000191',
+'970000189','970000190','970000192','970000193','970000194','970000195','970000196','970000191',
+'9300000301','970000192','970000194','9300000502','9300000503')
+),
+
+PROCS AS (
+SELECT *
+FROM CLARITY..CLARITY_EAP eap
+WHERE eap.proc_id in(
+	'101818',
+	'102635',
+	'160072',
+	'187213',
+	'122897',
+	'127027')
+--or (proc_name like '%pft%' or proc_name like '%pulmonary fun%'))
+)
+
+Select DISTINCT enc.PAT_ENC_CSN_ID, eap.PROC_NAME, ord.ORDER_TIME
+,eap.PROC_ID,
+eap.proc_code, eap.ORDER_DISPLAY_NAME, cc.component_id, 
+cc.BASE_NAME, cc.name as ComponentName, cc.EXTERNAL_NAME,
+res.ORD_NUM_VALUE
+--INTO Analytics.dbo.CCDA2715_Sharp_Sarcoidosis_PFT
+FROM COH 
+INNER JOIN ENC enc on COH.PAT_ID = enc.PAT_ID
+inner join CLARITY..order_proc ord on ENC.PAT_ENC_CSN_ID = ord.PAT_ENC_CSN_ID
+inner join PROCS eap on eap.PROC_ID = ord.PROC_ID
+inner join CLARITY..order_results res on ord.ORDER_PROC_ID = res.ORDER_PROC_ID
+inner join COMP cc on cc.COMPONENT_ID = res.COMPONENT_ID
+--left join CLARITY..LNC_DB_MAIN lnc on lnc.RECORD_ID = res.COMPON_LNC_ID
+WHERE 1 = 1
+and (res.RESULT_STATUS_C IN (3,4))
+AND ord.ORDER_TIME >= '2017-01-01'
+--  and
+--(RES.ORD_VALUE IS NOT NULL OR RES.ORD_NUM_VALUE<>9999999)
+order by proc_name, cc.base_name;
+
+ALTER TABLE [Analytics].[dbo].[CCDA2715_Sharp_Sarcoidosis_PFT] REBUILD PARTITION = ALL  WITH (DATA_COMPRESSION = Page)

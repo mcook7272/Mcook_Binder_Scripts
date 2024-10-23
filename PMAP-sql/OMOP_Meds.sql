@@ -11,3 +11,14 @@ join [CCDA_Stage].[mcook49_OMOP_Drug_Mappings2] omop on CAST(med.MEDICATION_ID A
 	AND omop.pat_enc_csn_id = mar.mar_enc_csn
 left join ZC_MED_UNIT zc on disp.DISP_QTYUNIT_C = zc.DISP_QTYUNIT_C
 order by om.pat_id, mar.mar_enc_csn, med.medication_id, mar.taken_time, disp.line
+
+
+select count(*) FROM (
+select ORDER_MED_ID, count(disp_qty) as qty_count, count(DISP_QTYUNIT_C) as unit_count
+from ORDER_DISP_MEDS
+group by ORDER_MED_ID
+having count(disp_qty) > 1 OR count(DISP_QTYUNIT_C) > 1
+) t
+UNION
+SELECT count(distinct order_med_id)
+FROM ORDER_DISP_MEDS

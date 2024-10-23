@@ -1,7 +1,10 @@
 
 SELECT mar.taken_time, 
 --mar.mar_enc_csn,
-disp.line, med.MEDICATION_ID, med.name as med_name, med.GENERIC_NAME, disp.disp_qty, disp.DISP_QTYUNIT_C, zc.name, med.FORM, med.ROUTE
+--mar.ORDER_MED_ID,
+disp.line, med.MEDICATION_ID, med.name as med_name, med.GENERIC_NAME, disp.disp_qty, 
+disp.DISP_QTYUNIT_C,mar.DOSE_UNIT_C,om.HV_DOSE_UNIT_C, zc.name, med.FORM, med.ROUTE,
+om.QUANTITY, mar.SIG
 FROM ORDER_DISP_MEDS disp
 join ORDER_MED om on disp.order_med_id = om.order_med_id
 join MAR_ADMIN_INFO mar on om.order_med_id = mar.order_med_id

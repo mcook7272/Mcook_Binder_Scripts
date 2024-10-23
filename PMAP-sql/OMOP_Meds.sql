@@ -15,6 +15,11 @@ join [CCDA_Stage].[mcook49_OMOP_Drug_Mappings2] omop on CAST(med.MEDICATION_ID A
 left join ZC_MED_UNIT zc on disp.DISP_QTYUNIT_C = zc.DISP_QTYUNIT_C
 order by om.pat_id, mar.mar_enc_csn, med.medication_id, mar.taken_time, disp.line
 
+/*
+MAYBE when problematic, calculate from SIG (standing in for quantity) [CONCAT?] DOSE_UNIT_C
+Ex: DOSE_UNIT_C = 41 (mL/hr), SIG = 42; ergo quantity = 42 mL/hr
+*/
+
 
 select count(*) FROM (
 select ORDER_MED_ID, count(disp_qty) as qty_count, count(DISP_QTYUNIT_C) as unit_count

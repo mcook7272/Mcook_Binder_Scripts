@@ -2,12 +2,12 @@ USE [PMAP_Analytics]
 
 select *
 from project_CuratedTables
-where destdbname like '%iwash%'
+where destdbname like '%pand%'
 order by desttabname
 
 update project_CuratedTables
-set NextRun = '2024-02-07'
-where destdbname like '%iwash%'
+set NextRun = '2025-03-18'
+where destdbname like '%pand%'
 and desttabname  like '%flowsheet%'
 
 exec usp_Execute_process

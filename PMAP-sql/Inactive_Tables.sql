@@ -1,0 +1,12 @@
+--Use PR4
+SELECT TOP (1000) [destination_database_name]
+      ,[dest_table_fullname]
+      ,[ProjectionDttm]
+      ,[projection_name]
+      ,[proj_id]
+      ,[table_id]
+      ,[destination_server_Name]
+      ,[DisableDate]
+      ,[uc_tablename]
+      ,[uc_databasename]
+  FROM [PMAP_Analytics].[dbo].[InActiveProjectionTables]

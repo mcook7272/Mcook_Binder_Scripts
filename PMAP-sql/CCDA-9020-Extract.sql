@@ -26,22 +26,21 @@ SELECT DISTINCT
   pp.EPISODE_ID,
   pp.episode_start,
   pp.episode_end,
-  ip.pat_enc_csn_id AS PAT_ENC_CSN_ID,
-  ip.hosp_admsn_time,
-  ip.hosp_disch_time,
+  ae.pat_enc_csn_id AS PAT_ENC_CSN_ID,
+  ae.hosp_admission_time AS hosp_admsn_time,
+  ae.hosp_discharge_time AS hosp_disch_time,
   p.BIRTH_DATE,
-  FLOOR(DATEDIFF(ip.hosp_admsn_time, p.BIRTH_DATE) / 365.25) AS age_at_admission
+  FLOOR(DATEDIFF(ae.hosp_admission_time, p.BIRTH_DATE) / 365.25) AS age_at_admission
 FROM pregnancy_patients pp
-INNER JOIN data_mgmt.derived.inpatient_encounters ip
-  ON pp.pat_id = ip.pat_id
-  AND ip.hosp_admsn_time BETWEEN pp.episode_start AND pp.episode_end
-inner join data_mgmt.derived.epic_all_encounters ae 
-  on ae.pat_enc_csn_id = ip.pat_enc_csn_id
+INNER JOIN data_mgmt.derived.epic_all_encounters ae
+  ON pp.pat_id = ae.pat_id
+  AND ae.hosp_admission_time BETWEEN pp.episode_start AND pp.episode_end
 INNER JOIN data_mgmt.clarity.patient p
   ON pp.pat_id = p.PAT_ID
-WHERE ip.hosp_admsn_time >= '2016-06-01'
-  AND ip.hosp_admsn_time < '2026-07-01'
-  AND FLOOR(DATEDIFF(ip.hosp_admsn_time, p.BIRTH_DATE) / 365.25) >= 18
+WHERE ae.hosp_admission_time >= '2016-06-01'
+  AND ae.hosp_admission_time < '2026-07-01'
+  AND FLOOR(DATEDIFF(ae.hosp_admission_time, p.BIRTH_DATE) / 365.25) >= 18
+  AND coalesce(ae.serv_area_id, 11) = 11
   -- Limit to actual hospitalizations
     AND ae.enc_type = 'Hospital Encounter' 
     AND (ae.ed_visit_yn = 'Y' OR ae.adt_patient_stat in ('Preadmission','Admission','Discharged'))
@@ -93,6 +92,7 @@ WHERE lr.component_base_name in ('CREATININE','CREATWB','POCCREA')
   AND lr.ord_num_value <> 9999999  -- Exclude non-numeric flag
   AND lr.specimen_taken_time >= '2016-06-01'
   AND lr.specimen_taken_time < '2026-07-01'
+  AND coalesce(lr.serv_area_id, 11) = 11
   AND lr.lab_status IN ('Final result', 'Edited Result - FINAL');
 
 
@@ -126,9 +126,9 @@ FROM creatinine_eligible;
 -- =============================================================================
 -- STEP 3: BASELINE SERUM CREATININE
 -- Priority 1: Outpatient creatinine 365-7 days prior to index admission
---   >= 3 values ? median of last 3
---   2 values ? average
---   1 value ? use that value
+--   >= 3 values --> median of last 3
+--   2 values --> average
+--   1 value --> use that value
 -- Priority 2: If no outpatient, use lowest inpatient value during index admission
 -- =============================================================================
 
@@ -530,7 +530,7 @@ ORDER BY patients DESC;
 -- Exclusion already applied: patients must have > 1 serum creatinine
 -- =============================================================================
 
-CREATE OR REPLACE TEMPORARY VIEW final_cohort AS
+CREATE OR REPLACE TABLE ccda.ccda_9020_cohort AS
 SELECT DISTINCT
   pc.PAT_ID,
   pc.EPISODE_ID,
@@ -583,7 +583,7 @@ SELECT
   COUNT(*) AS total_patient_episodes,
   SUM(has_aki) AS episodes_with_aki,
   SUM(has_ckd) AS episodes_with_ckd
-FROM final_cohort
+FROM ccda.ccda_9020_cohort
 GROUP BY kidney_disease_category
 ORDER BY pct_of_cohort DESC;
 
@@ -609,7 +609,7 @@ SELECT
   max_aki_stage,
   has_ckd,
   kidney_disease_category
-FROM final_cohort
+FROM ccda.ccda_9020_cohort
 ORDER BY PAT_ID, hosp_admsn_time;
 
 -- COMMAND ----------

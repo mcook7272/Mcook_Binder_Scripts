@@ -35,12 +35,17 @@ FROM pregnancy_patients pp
 INNER JOIN data_mgmt.derived.inpatient_encounters ip
   ON pp.pat_id = ip.pat_id
   AND ip.hosp_admsn_time BETWEEN pp.episode_start AND pp.episode_end
+inner join data_mgmt.derived.epic_all_encounters ae 
+  on ae.pat_enc_csn_id = ip.pat_enc_csn_id
 INNER JOIN data_mgmt.clarity.patient p
   ON pp.pat_id = p.PAT_ID
 WHERE ip.hosp_admsn_time >= '2016-06-01'
   AND ip.hosp_admsn_time < '2026-07-01'
-  AND coalesce(ip.serv_area_id, 11) = 11
-  AND FLOOR(DATEDIFF(ip.hosp_admsn_time, p.BIRTH_DATE) / 365.25) >= 18;
+  AND FLOOR(DATEDIFF(ip.hosp_admsn_time, p.BIRTH_DATE) / 365.25) >= 18
+  -- Limit to actual hospitalizations
+    AND ae.enc_type = 'Hospital Encounter' 
+    AND (ae.ed_visit_yn = 'Y' OR ae.adt_patient_stat in ('Preadmission','Admission','Discharged'))
+  ;
 
 SELECT COUNT(DISTINCT PAT_ID) AS unique_patients,
        COUNT(DISTINCT EPISODE_ID) AS unique_episodes,
@@ -52,8 +57,9 @@ FROM pregnancy_cohort;
 -- DBTITLE 1,Step 2: Serum Creatinine Labs - Identify all creatinine measurements and classify inpatient vs outpatient
 -- =============================================================================
 -- STEP 2: SERUM CREATININE MEASUREMENTS
--- Classify labs as inpatient (during index hospitalization) vs outpatient
--- Filter: component_base_name = 'CREATININE' with valid numeric values
+-- Classify labs as inpatient vs outpatient
+-- Add indicator for labs during index hospitalization
+-- Filter: component_base_name in ('CREATININE','CREATWB','POCCREA') with valid numeric values
 -- =============================================================================
 
 CREATE OR REPLACE TEMPORARY VIEW creatinine_labs AS
@@ -65,28 +71,34 @@ SELECT DISTINCT
   pc.hosp_disch_time,
   lr.order_proc_id,
   lr.specimen_taken_time,
-  lr.ord_num_value AS creatinine_value,
+  lr.ord_num_value * case when lower(lr.reference_unit) = 'umol/l' then 1.0 else 0.01131 end AS creatinine_value,
   lr.pat_enc_csn_id AS lab_csn,
   CASE
-    WHEN lr.specimen_taken_time BETWEEN pc.hosp_admsn_time AND pc.hosp_disch_time
+    when ie.pat_id is not null
     THEN 'INPATIENT'
     ELSE 'OUTPATIENT'
-  END AS lab_setting
+  END AS lab_setting,
+  CASE
+    WHEN lr.specimen_taken_time BETWEEN pc.hosp_admsn_time AND pc.hosp_disch_time then 1 else 0
+  END AS index_hospitalization_lab
 FROM pregnancy_cohort pc
 INNER JOIN data_mgmt.derived.lab_results lr
   ON pc.PAT_ID = lr.pat_id
-WHERE lr.component_base_name = 'CREATININE'
+LEFT JOIN data_mgmt.derived.inpatient_encounters ie ON
+  ie.pat_id = pc.pat_id AND
+  lr.specimen_taken_time between ie.hosp_admsn_time and ie.hosp_disch_time
+WHERE lr.component_base_name in ('CREATININE','CREATWB','POCCREA')
   AND lr.ord_num_value IS NOT NULL
   AND lr.ord_num_value > 0
   AND lr.ord_num_value <> 9999999  -- Exclude non-numeric flag
   AND lr.specimen_taken_time >= '2016-06-01'
   AND lr.specimen_taken_time < '2026-07-01'
-  AND coalesce(lr.serv_area_id, 11) = 11
   AND lr.lab_status IN ('Final result', 'Edited Result - FINAL');
+
 
 -- Count patients with at least 1 creatinine in study window
 -- and at least 2 distinct inpatient creatinine values during index hospitalization
-CREATE OR REPLACE TEMPORARY VIEW creatinine_eligible AS
+CREATE OR REPLACE TEMPORARY view creatinine_eligible AS
 SELECT
   PAT_ID,
   EPISODE_ID,
@@ -96,13 +108,13 @@ SELECT
 FROM (
   SELECT
     PAT_ID, EPISODE_ID, index_csn, hosp_admsn_time, hosp_disch_time,
-    COUNT(DISTINCT CASE WHEN lab_setting = 'INPATIENT' THEN specimen_taken_time END) AS inpatient_creat_count,
+    sum(index_hospitalization_lab) AS index_hospitalization_creat_count,
     COUNT(*) AS total_creat_count
   FROM creatinine_labs
   GROUP BY PAT_ID, EPISODE_ID, index_csn, hosp_admsn_time, hosp_disch_time
 )
 WHERE total_creat_count >= 2  -- must have more than 1 creatinine (applying exclusion early)
-  AND inpatient_creat_count >= 2;  -- At least 2 during index hospitalization
+  AND index_hospitalization_creat_count >= 2;  -- At least 2 during index hospitalization
 
 SELECT COUNT(DISTINCT PAT_ID) AS patients_creatinine_eligible,
        COUNT(DISTINCT EPISODE_ID) AS episodes_eligible
@@ -114,9 +126,9 @@ FROM creatinine_eligible;
 -- =============================================================================
 -- STEP 3: BASELINE SERUM CREATININE
 -- Priority 1: Outpatient creatinine 365-7 days prior to index admission
---   >= 3 values → median of last 3
---   2 values → average
---   1 value → use that value
+--   >= 3 values ? median of last 3
+--   2 values ? average
+--   1 value ? use that value
 -- Priority 2: If no outpatient, use lowest inpatient value during index admission
 -- =============================================================================
 
@@ -177,12 +189,14 @@ LEFT JOIN outpatient_baseline ob
   ON cl.PAT_ID = ob.PAT_ID
   AND cl.EPISODE_ID = ob.EPISODE_ID
   AND cl.index_csn = ob.index_csn
-WHERE cl.lab_setting = 'INPATIENT'
+WHERE 
+  cl.lab_setting = 'INPATIENT'
   AND ob.PAT_ID IS NULL  -- Only when no outpatient baseline exists
+  AND cl.index_hospitalization_lab = 1
 GROUP BY cl.PAT_ID, cl.EPISODE_ID, cl.index_csn;
 
 -- Combined baseline
-CREATE OR REPLACE TEMPORARY VIEW baseline_creatinine AS
+CREATE OR REPLACE TEMPORARY view baseline_creatinine AS
 SELECT * FROM outpatient_baseline
 UNION ALL
 SELECT * FROM inpatient_baseline;
@@ -216,7 +230,7 @@ INNER JOIN baseline_creatinine bc
   ON cl.PAT_ID = bc.PAT_ID
   AND cl.EPISODE_ID = bc.EPISODE_ID
   AND cl.index_csn = bc.index_csn
-WHERE cl.lab_setting = 'INPATIENT';
+WHERE cl.index_hospitalization_lab = 1;
 
 -- Check for 0.3 mg/dL increase within 48 hours (any pair of labs)
 CREATE OR REPLACE TEMPORARY VIEW aki_48hr_increase AS
@@ -236,15 +250,56 @@ CREATE OR REPLACE TEMPORARY VIEW dialysis_during_admission AS
 SELECT DISTINCT
   ce.PAT_ID, ce.EPISODE_ID, ce.index_csn
 FROM creatinine_eligible ce
-INNER JOIN data_mgmt.clarity.order_proc op
-  ON ce.PAT_ID = op.PAT_ID
-  AND op.PAT_ENC_CSN_ID = ce.index_csn
-WHERE (
-  lower(op.DESCRIPTION) LIKE '%hemodialysis inpatient%'
-  OR lower(op.DESCRIPTION) LIKE '%continuous renal replacement%'
-  OR lower(op.DESCRIPTION) LIKE '%peritoneal dialysis%'
-)
-AND op.ORDERING_DATE BETWEEN ce.hosp_admsn_time AND ce.hosp_disch_time;
+INNER JOIN data_mgmt.derived.flowsheet_data f ON
+  f.pat_enc_csn_id = ce.index_csn
+where f.meas_id in (
+  '3040100110'
+	,'3040100116'
+	,'3040100119'
+	,'3040100135'
+	,'3040100136'
+	,'3040100137'
+	,'304401012832'
+	,'304401012833'
+	,'304401012834'
+	,'304401012835'
+	,'30481005601'
+	,'30481005701'
+	,'304810060'
+	,'8100260'
+	,'8100270'
+	,'15392'
+	,'3040107041'
+	,'3040107081'
+	,'304601000'
+	,'304601001'
+	,'304601002'
+	,'304601046'
+	,'304601053'
+	,'304601054'
+	,'370040'
+	,'370080'
+	,'370090'
+	,'370110'
+	,'370120'
+	,'370150'
+	,'370160'
+	,'370170'
+	,'370180'
+	,'370190'
+	,'370200'
+	,'370210'
+	,'370220'
+	,'370400'
+	,'370401'
+	,'370403'
+	,'370404'
+	,'370405'
+	,'370406'
+	,'370407'
+  ,'370409'
+  ,'370412'
+);
 
 -- Assign AKI Stage (highest stage per patient-episode)
 CREATE OR REPLACE TEMPORARY VIEW aki_patients AS
@@ -294,27 +349,45 @@ ORDER BY max_aki_stage;
 -- ICD-10 codes on problem list during pregnancy:
 --   N18.1-N18.9, R80.0, R80.8, R80.9, O12.1
 -- =============================================================================
+-- egfr function
+CREATE OR REPLACE TEMPORARY FUNCTION egfr(
+	scr FLOAT,
+	scr_dt TIMESTAMP,
+	gender STRING,
+	birth_date DATE
+)
+RETURNS FLOAT
+RETURN
+	141.57
+	* POWER(
+		scr / CASE WHEN gender = 'F' THEN 0.7 ELSE 0.9 END,
+		CASE
+			WHEN scr < CASE WHEN gender = 'F' THEN 0.7 ELSE 0.9 END
+				THEN CASE WHEN gender = 'F' THEN -0.241 ELSE -0.302 END
+			ELSE -1.2
+		END
+		)
+	* POWER(
+		0.993839,
+		DATEDIFF(scr_dt, birth_date) / 365.25
+		)
+	* CASE WHEN gender = 'F' THEN 1.012 ELSE 1 END;
 
 -- CKD Lab Trigger: eGFR < 90
 CREATE OR REPLACE TEMPORARY VIEW ckd_egfr AS
-SELECT DISTINCT ce.PAT_ID, ce.EPISODE_ID, ce.index_csn, 'eGFR_LT_90' AS ckd_reason
-FROM creatinine_eligible ce
-INNER JOIN data_mgmt.derived.lab_results lr
-  ON ce.PAT_ID = lr.pat_id
-WHERE lr.component_base_name IN ('GFRCKDCR2021', 'GFRNA', 'GFRAA', 'EGFR', 'GFRCKDEPI')
-  AND lr.ord_num_value IS NOT NULL
-  AND lr.ord_num_value > 0
-  AND lr.ord_num_value < 90
-  AND lr.ord_num_value <> 9999999
-  AND lr.lab_status IN ('Final result', 'Edited Result - FINAL')
-  AND coalesce(lr.serv_area_id, 11) = 11
-  AND (
-    -- Outpatient: 365-7 days prior to admission
-    (lr.specimen_taken_time BETWEEN DATE_ADD(ce.hosp_admsn_time, -365) AND DATE_ADD(ce.hosp_admsn_time, -7))
-    OR
-    -- First inpatient lab (during index admission)
-    (lr.specimen_taken_time BETWEEN ce.hosp_admsn_time AND ce.hosp_disch_time)
-  );
+-- outpatient
+SELECT b.PAT_ID, b.EPISODE_ID, b.index_csn, 'eGFR_LT_90' AS ckd_reason
+FROM outpatient_baseline_labs b
+INNER JOIN data_mgmt.derived.epic_patient pat on pat.pat_id = b.pat_id
+where egfr(b.creatinine_value, b.specimen_taken_time, pat.genderabbr,pat.birth_date) < 90
+UNION
+-- inpatient
+select cl.PAT_ID, cl.EPISODE_ID, cl.index_csn, 'eGFR_LT_90' AS ckd_reason
+from creatinine_labs cl
+INNER JOIN data_mgmt.derived.epic_patient pat on pat.pat_id = cl.pat_id
+where 
+  index_hospitalization_lab = 1 and
+  egfr(cl.creatinine_value, cl.specimen_taken_time, pat.genderabbr,pat.birth_date) < 90;
 
 -- CKD Lab Trigger: UACR > 300 mg/g
 CREATE OR REPLACE TEMPORARY VIEW ckd_uacr AS
@@ -322,13 +395,42 @@ SELECT DISTINCT ce.PAT_ID, ce.EPISODE_ID, ce.index_csn, 'UACR_GT_300' AS ckd_rea
 FROM creatinine_eligible ce
 INNER JOIN data_mgmt.derived.lab_results lr
   ON ce.PAT_ID = lr.pat_id
-WHERE lr.component_base_name IN ('MICRALBCREAT', 'MICROALCREAT', 'POCURALCRERA')
+WHERE
+  (
+      component_base_name in ('ALBCREATRAT','MICRALBCREAT','MICRALBCREUR','MICROALCREAT') or 
+      component_id in (3000000793,4000000917,5000002196,7100002936,9000000525)
+  ) and 
+  component_id not in (6000001463)
   AND lr.ord_num_value IS NOT NULL
+  and lower(lr.reference_unit) in (
+	'mcg/mg'
+	,'mcg/mg c'
+	,'mcg/mg cr'
+	,'mcg/mg crea'
+	,'mcg/mg creat'
+	,'mcg/mgcr'
+	,'mg/g cr'
+	,'mg/g cre'
+	,'mg/g creat'
+	,'mg/g creatinine'
+	,'mg/g crt'
+	,'mg/gcr'
+	,'mg/gcreat'
+	,'mg/gm'
+	,'mgalb/gcr'
+	,'ug/ mg cr'
+	,'ug/mg'
+	,'ug/mg cr'
+	,'ug/mg cre'
+	,'ug/mg creat'
+	,'ug/mg creatinine'
+	,'ug/mgcr'
+	)
   AND lr.ord_num_value > 300
   AND lr.ord_num_value <> 9999999
   AND lr.lab_status IN ('Final result', 'Edited Result - FINAL')
-  AND coalesce(lr.serv_area_id, 11) = 11
   AND lr.specimen_taken_time BETWEEN ce.hosp_admsn_time AND ce.hosp_disch_time;
+
 
 -- CKD Lab Trigger: Urine Protein/Creatinine Ratio > 300 mg/g
 CREATE OR REPLACE TEMPORARY VIEW ckd_upcr AS
@@ -338,10 +440,27 @@ INNER JOIN data_mgmt.derived.lab_results lr
   ON ce.PAT_ID = lr.pat_id
 WHERE lr.component_base_name = 'PROTCRRATIO'
   AND lr.ord_num_value IS NOT NULL
-  AND lr.ord_num_value > 300
+  AND (case 
+		when lower(lr.reference_unit) in (
+			'mg/g cr'
+			,'mg/g cre'
+			,'mg/g cre/12h'
+			,'mg/g creat'
+			,'mg/g/creat'
+			,'mg/gm'
+		) then 1
+		when lower(lr.reference_unit) in (
+			'mg/mg'
+			,'mg/mg creatinine'
+		) then 1000
+		when 
+			(lower(lr.reference_unit) is null OR lower(lr.reference_unit) = 'ratio') and 
+			 try_cast(lr.reference_low as float) = 0 and
+			 try_cast(lr.reference_high as float) = 0.19
+			then 1000
+		) * lr.ord_num_value > 300
   AND lr.ord_num_value <> 9999999
   AND lr.lab_status IN ('Final result', 'Edited Result - FINAL')
-  AND coalesce(lr.serv_area_id, 11) = 11
   AND lr.specimen_taken_time BETWEEN ce.hosp_admsn_time AND ce.hosp_disch_time;
 
 -- CKD Lab Trigger: 24-Hour Urine Protein > 300 mg
@@ -350,12 +469,18 @@ SELECT DISTINCT ce.PAT_ID, ce.EPISODE_ID, ce.index_csn, '24HR_PROTEIN_GT_300' AS
 FROM creatinine_eligible ce
 INNER JOIN data_mgmt.derived.lab_results lr
   ON ce.PAT_ID = lr.pat_id
-WHERE lr.component_base_name IN ('PROTEIN24HR', 'PROTUPEP24')
+WHERE lr.component_base_name IN ('PROTEIN24HR','PROTUPEP24','PROTUR24HR','UTP24')
   AND lr.ord_num_value IS NOT NULL
-  AND lr.ord_num_value > 300
+  and case when lower(lr.reference_unit) in (
+		'mg/(24.h)'
+		,'mg/24'
+		,'mg/24 h'
+		,'mg/24 hr'
+		,'mg/24 hrs'
+		) then 1 when lower(lr.reference_unit) = 'g/24hr' then 1000
+		end * lr.ord_num_value > 300
   AND lr.ord_num_value <> 9999999
   AND lr.lab_status IN ('Final result', 'Edited Result - FINAL')
-  AND coalesce(lr.serv_area_id, 11) = 11
   AND lr.specimen_taken_time BETWEEN ce.hosp_admsn_time AND ce.hosp_disch_time;
 
 -- CKD ICD-10 Codes on Problem List during pregnancy/index hospitalization
@@ -405,7 +530,7 @@ ORDER BY patients DESC;
 -- Exclusion already applied: patients must have > 1 serum creatinine
 -- =============================================================================
 
-CREATE OR REPLACE TABLE ccda.ccda_9020_cohort AS
+CREATE OR REPLACE TEMPORARY VIEW final_cohort AS
 SELECT DISTINCT
   pc.PAT_ID,
   pc.EPISODE_ID,
@@ -458,7 +583,7 @@ SELECT
   COUNT(*) AS total_patient_episodes,
   SUM(has_aki) AS episodes_with_aki,
   SUM(has_ckd) AS episodes_with_ckd
-FROM ccda.ccda_9020_cohort
+FROM final_cohort
 GROUP BY kidney_disease_category
 ORDER BY pct_of_cohort DESC;
 
@@ -484,7 +609,7 @@ SELECT
   max_aki_stage,
   has_ckd,
   kidney_disease_category
-FROM ccda.ccda_9020_cohort
+FROM final_cohort
 ORDER BY PAT_ID, hosp_admsn_time;
 
 -- COMMAND ----------
